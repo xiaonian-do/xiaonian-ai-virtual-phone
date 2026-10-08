@@ -60,18 +60,23 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build web
+      - name: Build web (彻底剥离服务器端功能)
         run: |
-          # 1. 临时移出 3D 页面（避开 node:path 报错）
-          if [ -d "app/world-builder" ]; then mv app/world-builder app/_world-builder_backup; fi
-          # 2. 临时移出后端 API 文件夹（避开静态导出冲突）
-          if [ -d "app/api" ]; then mv app/api app/_api_backup; fi
+          # 创建临时备份区
+          mkdir -p /tmp/next_backup
           
+          # 剥离所有在纯静态导出中会报错的后端/动态/3D依赖
+          mv app/api /tmp/next_backup/ 2>/dev/null || true
+          mv app/world-builder /tmp/next_backup/ 2>/dev/null || true
+          mv app/manifest.webmanifest /tmp/next_backup/ 2>/dev/null || true
+          mv app/sitemap.ts /tmp/next_backup/ 2>/dev/null || true
+          mv app/robots.ts /tmp/next_backup/ 2>/dev/null || true
+          
+          # 执行构建（此时只剩下纯前端页面）
           npm run build
           
-          # 3. 打包完成后，原样恢复，保证你的源代码不变
-          if [ -d "app/_world-builder_backup" ]; then mv app/_world-builder_backup app/world-builder; fi
-          if [ -d "app/_api_backup" ]; then mv app/_api_backup app/api; fi
+          # 构建完成后，原样恢复所有被剥离的文件夹
+          mv /tmp/next_backup/* app/ 2>/dev/null || true
 
       - name: Setup Capacitor
         run: |
