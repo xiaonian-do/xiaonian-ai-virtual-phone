@@ -60,14 +60,18 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build web (彻底砍掉所有服务端和3D代码)
+      - name: Build web (彻底粉碎所有 API 路由)
         run: |
           # 暴力粉碎所有在纯静态 APK 里跑不了的后端和3D代码，不再恢复！
           rm -rf app/api
           rm -rf app/world-builder
+          rm -rf app/personal-shortcut-run
           rm -rf app/manifest.webmanifest
           rm -rf app/sitemap.ts
           rm -rf app/robots.ts
+          
+          # 全局扫荡：删掉所有含有 route.ts 或 route.js 的目录
+          find app -type f \( -name "route.ts" -o -name "route.js" \) -exec dirname {} \; | sort -u | xargs -I {} rm -rf {} 2>/dev/null || true
           
           # 执行纯前端构建
           npm run build
