@@ -26,9 +26,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # 关键修改：跳过了安装 SDK 的步骤，直接手动接受许可（解决和上次一样的报错）
+      - name: Accept Android SDK Licenses
+        run: echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
+      # 配置 Next.js 为纯静态导出，准备塞进 APK
       - name: Configure Next.js for Static Export
         run: |
           if [ -f next.config.js ]; then mv next.config.js next.config.js.bak; fi
@@ -54,6 +56,12 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
