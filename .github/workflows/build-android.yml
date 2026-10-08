@@ -34,8 +34,28 @@ jobs:
           if [ -f next.config.js ]; then mv next.config.js next.config.js.bak; fi
           if [ -f next.config.mjs ]; then mv next.config.mjs next.config.mjs.bak; fi
           if [ -f next.config.ts ]; then mv next.config.ts next.config.ts.bak; fi
-          # 关键修改：添加了 typescript 和 eslint 的忽略规则，强行通过编译
-          echo "const nextConfig = { output: 'export', images: { unoptimized: true }, typescript: { ignoreBuildErrors: true }, eslint: { ignoreDuringBuilds: true } }; module.exports = nextConfig;" > next.config.js
+          cat << 'EOF' > next.config.js
+          /** @type {import('next').NextConfig} */
+          const nextConfig = {
+            output: 'export',
+            images: { unoptimized: true },
+            typescript: { ignoreBuildErrors: true },
+            eslint: { ignoreDuringBuilds: true },
+            webpack: (config, { isServer }) => {
+              if (!isServer) {
+                config.resolve.fallback = {
+                  ...config.resolve.fallback,
+                  fs: false,
+                  path: false,
+                  crypto: false,
+                  stream: false,
+                };
+              }
+              return config;
+            },
+          };
+          module.exports = nextConfig;
+          EOF
 
       - name: Install dependencies
         run: npm install
