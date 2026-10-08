@@ -60,22 +60,28 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build web (彻底剥离服务器端功能)
+      - name: Build web (系统性剥离所有服务端功能)
         run: |
-          # 创建临时备份区
+          # 1. 创建备份目录
           mkdir -p /tmp/next_backup
           
-          # 剥离所有在纯静态导出中会报错的后端/动态/3D依赖
-          mv app/api /tmp/next_backup/ 2>/dev/null || true
+          # 2. 系统性剥离：查找并移走所有包含 route.ts/route.js 的 API 路由文件夹
+          #    这是纯静态 APK 绝对跑不了的东西
+          find app -type f \( -name "route.ts" -o -name "route.js" \) -exec dirname {} \; | sort -u | xargs -I {} mv {} /tmp/next_backup/ 2>/dev/null || true
+          
+          # 3. 移走所有已知依赖服务端模块的页面文件夹
           mv app/world-builder /tmp/next_backup/ 2>/dev/null || true
+          mv app/personal-shortcut-run /tmp/next_backup/ 2>/dev/null || true
+          
+          # 4. 移走静态导出不支持的元数据文件
           mv app/manifest.webmanifest /tmp/next_backup/ 2>/dev/null || true
           mv app/sitemap.ts /tmp/next_backup/ 2>/dev/null || true
           mv app/robots.ts /tmp/next_backup/ 2>/dev/null || true
-          
-          # 执行构建（此时只剩下纯前端页面）
+
+          # 5. 执行构建（此时 app 目录只剩下能跑的纯前端页面）
           npm run build
-          
-          # 构建完成后，原样恢复所有被剥离的文件夹
+
+          # 6. 构建完成，把所有被剥离的文件夹原样恢复
           mv /tmp/next_backup/* app/ 2>/dev/null || true
 
       - name: Setup Capacitor
