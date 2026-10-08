@@ -62,12 +62,12 @@ jobs:
 
       - name: Build web (彻底砍掉所有服务端和3D代码)
         run: |
-          # 暴力删除所有在纯静态 APK 里跑不了的后端和3D代码，不再恢复！
+          # 暴力粉碎所有在纯静态 APK 里跑不了的后端和3D代码，不再恢复！
           rm -rf app/api
           rm -rf app/world-builder
-          rm -f app/manifest.webmanifest
-          rm -f app/sitemap.ts
-          rm -f app/robots.ts
+          rm -rf app/manifest.webmanifest
+          rm -rf app/sitemap.ts
+          rm -rf app/robots.ts
           
           # 执行纯前端构建
           npm run build
